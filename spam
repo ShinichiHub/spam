@@ -3,7 +3,10 @@
 GREEN="\e[92m"
 BLUE="\e[94m"
 CYAN="\e[96m"
+RED="\e[91m"
 RESET="\e[0m"
+
+i=0
 
 banner() {
   echo -e "${CYAN}=====================================${RESET}"
@@ -20,22 +23,32 @@ input_webhook() {
 send_webhook() {
   curl -s -H "Content-Type: application/json" -X POST \
     -d "{\"content\":\"$MESSAGE\"}" "$1" > /dev/null
-  echo -e "${CYAN}Đã gửi đến: $1${RESET}"
+  ((i++))
+}
+
+show_stats() {
+  while true; do
+    clear
+    echo -e "${CYAN}============== Shinichi Hub ==============${RESET}"
+    echo -e "${GREEN}RAM Usage:$(free -h | awk '/Mem/ {print " " $3 "/" $2}')${RESET}"
+    echo -e "${GREEN}Sent Messages: $i${RESET}"
+    echo -e "${CYAN}==========================================${RESET}"
+    sleep 1
+  done
 }
 
 start_spam_single() {
-  i=1
+  show_stats & STATS_PID=$!
   if [[ "$COUNT" -eq 0 ]]; then
     while true; do
       send_webhook "$WEBHOOK"
-      ((i++))
     done
   else
-    while [[ "$i" -le "$COUNT" ]]; do
+    for ((j = 1; j <= COUNT; j++)); do
       send_webhook "$WEBHOOK"
-      ((i++))
     done
   fi
+  kill $STATS_PID
 }
 
 input_create() {
@@ -70,22 +83,21 @@ start_spam_multi() {
     echo "Chưa có webhook nào được tạo!"
     return
   fi
-  i=1
+  show_stats & STATS_PID=$!
   if [[ "$COUNT" -eq 0 ]]; then
     while true; do
       for URL in "${SAVE_WEBHOOKS[@]}"; do
         send_webhook "$URL"
       done
-      ((i++))
     done
   else
-    while [[ "$i" -le "$COUNT" ]]; do
+    for ((j = 1; j <= COUNT; j++)); do
       for URL in "${SAVE_WEBHOOKS[@]}"; do
         send_webhook "$URL"
       done
-      ((i++))
     done
   fi
+  kill $STATS_PID
 }
 
 start_spam_both() {
@@ -93,24 +105,23 @@ start_spam_both() {
     echo "Thiếu webhook hoặc chưa tạo webhook nào!"
     return
   fi
-  i=1
+  show_stats & STATS_PID=$!
   if [[ "$COUNT" -eq 0 ]]; then
     while true; do
       send_webhook "$WEBHOOK"
       for URL in "${SAVE_WEBHOOKS[@]}"; do
         send_webhook "$URL"
       done
-      ((i++))
     done
   else
-    while [[ "$i" -le "$COUNT" ]]; do
+    for ((j = 1; j <= COUNT; j++)); do
       send_webhook "$WEBHOOK"
       for URL in "${SAVE_WEBHOOKS[@]}"; do
         send_webhook "$URL"
       done
-      ((i++))
     done
   fi
+  kill $STATS_PID
 }
 
 while true; do
