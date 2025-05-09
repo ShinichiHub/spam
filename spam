@@ -88,7 +88,7 @@ create_webhook() {
   read -p "$(echo -e "${CYAN}Nhấn Enter để quay lại menu chính...${RESET}")"
 }
 
-# Spam Webhook
+# Spam Webhook (Không delay)
 start_spam() {
   clear
   banner
@@ -105,14 +105,14 @@ start_spam() {
 
   for ((i = 1; i <= count; i++)); do
     [[ "$mode" == "1" || "$mode" == "3" ]] && [ -n "$custom_webhook" ] && \
-      curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$content\"}" "$custom_webhook" > /dev/null
+      curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$content\"}" "$custom_webhook" > /dev/null &
 
     [[ "$mode" == "2" || "$mode" == "3" ]] && [ -n "$bot_webhook" ] && \
-      curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$content\"}" "$bot_webhook" > /dev/null
+      curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$content\"}" "$bot_webhook" > /dev/null &
 
     echo -e "${YELLOW}[$i/$count] Đã gửi.${RESET}"
-    sleep 0.1
   done
+  wait
   read -p "$(echo -e "${CYAN}Nhấn Enter để quay lại menu chính...${RESET}")"
 }
 
