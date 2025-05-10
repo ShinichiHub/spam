@@ -20,8 +20,8 @@ banner() {
   clear
   echo -e "${CYAN}"
   echo "╔══════════════════════════════════════╗"
-  echo "║     DISCORD WEBHOOK SPAMMER      ║"
-  echo "║     Made by Baor - Termux       ║"
+  echo "║     DISCORD WEBHOOK SPAMMER TOOL     ║"
+  echo "║     Made by Baor  discord.gg/conanhub - Termux       ║"
   echo "╚══════════════════════════════════════╝"
   echo -e "${RESET}"
 }
@@ -85,6 +85,23 @@ create_webhook() {
   fi
 }
 
+# Gửi status mỗi lần spam tin nhắn
+send_status() {
+  local target_webhook="$1"
+  timestamp=$(date '+%H:%M:%S')
+  ram=$(free -h | grep Mem | awk '{print $3 "/" $2}')
+  uptime=$(uptime -p)
+  status="**[STATUS - $timestamp]**
+> Tin đã gửi: $message_sent
+> Webhook: $( [[ "$mode" == "1" ]] && echo "Thủ công" || echo "Bot" )
+> RAM: $ram
+> Uptime: $uptime
+> Webhook Status: $spam_status"
+
+  curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$status\"}" "$target_webhook" > /dev/null
+  echo -e "${CYAN}[$timestamp] Đã gửi status.${RESET}"
+}
+
 # Spam Webhook (Gửi tin nhắn liên tục)
 spam_webhook() {
   banner
@@ -117,43 +134,21 @@ spam_webhook() {
       curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$message\"}" "$target_webhook" > /dev/null
       message_sent=$((message_sent+1))
       echo -e "${CYAN}Đã gửi tin nhắn số $message_sent${RESET}"
-
-      # Gửi status nếu status webhook đang bật
-      if [ "$spam_status" == "on" ]; then
-        send_status "$target_webhook"
-      fi
+      [ "$spam_status" == "on" ] && send_status "$target_webhook"
     done
   else
     while [ "$message_sent" -lt "$spam_limit" ]; do
       curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$message\"}" "$target_webhook" > /dev/null
       message_sent=$((message_sent+1))
       echo -e "${CYAN}Đã gửi tin nhắn số $message_sent${RESET}"
-
-      # Gửi status nếu status webhook đang bật
-      if [ "$spam_status" == "on" ]; then
-        send_status "$target_webhook"
-      fi
+      [ "$spam_status" == "on" ] && send_status "$target_webhook"
     done
-    echo -e "${YELLOW}Đã gửi đủ $message_sent tin nhắn, ping @everyone!${RESET}"
-    curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"@everyone Spam hoàn tất!\"}" "$target_webhook" > /dev/null
+    echo -e "${YELLOW}Đã gửi đủ $message_sent tin nhắn.${RESET}"
+    curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \" đừng lì nữa nha kid\"}" "$target_webhook" > /dev/null
   fi
-}
 
-# Gửi status mỗi lần spam tin nhắn
-send_status() {
-  local target_webhook="$1"
-  
-  timestamp=$(date '+%H:%M:%S')
-  ram=$(free -h | grep Mem | awk '{print $3 "/" $2}')
-  uptime=$(uptime -p)
-  status="**[STATUS - $timestamp]**
-> Tin đã gửi: $message_sent
-> Webhook: $( [[ "$mode" == "1" ]] && echo "Thủ công" || echo "Bot" )
-> RAM: $ram
-> Uptime: $uptime"
-
-  curl -s -X POST -H "Content-Type: application/json" -d "{\"content\": \"$status\"}" "$target_webhook" > /dev/null
-  echo -e "${CYAN}[$timestamp] Đã gửi status.${RESET}"
+  # Quay về menu chính sau khi spam xong
+  main_menu
 }
 
 # Gửi Webhook STATUS định kỳ
@@ -172,36 +167,42 @@ send_status_loop() {
     return
   fi
 
-  echo -e "${CYAN}Trạng thái Webhook sẽ được bật:${RESET} $(echo $spam_status)"
+  echo -e "${CYAN}Webhook Status hiện tại: ${RESET}$spam_status"
   read -p "Bật hay tắt (on/off): " status_choice
   spam_status=$status_choice
+  echo -e "${GREEN}Nhấn Enter để quay lại menu chính.${RESET}"
 
   while true; do
     if [ "$spam_status" == "on" ]; then
-      # Gửi trạng thái định kỳ nếu status bật
-      send_status "$target_webhook"
+      [[ "$mode" == "1" ]] && send_status "$custom_webhook"
+      [[ "$mode" == "2" ]] && send_status "$bot_webhook"
     fi
     sleep 60
   done
 }
 
 # Menu chính
-while true; do
-  banner
-  echo -e "${BLUE}Chọn một chức năng:${RESET}"
-  echo -e "${YELLOW}1.${RESET} Nhập Webhook thủ công"
-  echo -e "${YELLOW}2.${RESET} Tạo Webhook từ Bot"
-  echo -e "${YELLOW}3.${RESET} Spam Webhook (Gửi tin nhắn liên tục)"
-  echo -e "${YELLOW}4.${RESET} Gửi Webhook STATUS định kỳ"
-  echo -e "${YELLOW}5.${RESET} Thoát"
-  read -p "Chọn (1-5): " choice
+main_menu() {
+  while true; do
+    banner
+    echo -e "${BLUE}Chọn một chức năng:${RESET}"
+    echo -e "${YELLOW}1.${RESET} Nhập Webhook thủ công"
+    echo -e "${YELLOW}2.${RESET} Tạo Webhook từ Bot"
+    echo -e "${YELLOW}3.${RESET} Spam Webhook (Gửi tin nhắn liên tục)"
+    echo -e "${YELLOW}4.${RESET} Gửi Webhook STATUS định kỳ"
+    echo -e "${YELLOW}5.${RESET} Thoát"
+    read -p "Chọn (1-5): " choice
 
-  case $choice in
-    1) input_webhook ;;
-    2) create_webhook ;;
-    3) spam_webhook ;;
-    4) send_status_loop ;;
-    5) exit ;;
-    *) echo -e "${RED}Lựa chọn không hợp lệ.${RESET}" ;;
-  esac
-done
+    case $choice in
+      1) input_webhook ;;
+      2) create_webhook ;;
+      3) spam_webhook ;;
+      4) send_status_loop ;;
+      5) exit ;;
+      *) echo -e "${RED}Lựa chọn không hợp lệ.${RESET}" ;;
+    esac
+  done
+}
+
+# Khởi động menu chính
+main_menu
