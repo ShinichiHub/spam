@@ -187,7 +187,7 @@ main_menu() {
   while true; do
     banner
     echo -e "${BLUE}Chọn một chức năng:${RESET}"
-    echo -e "${YELLOW}1.${RESET} Nhập Webhook thủ công"
+    echo -e "${YELLOW}1.${RESET} Nhập Webhook "
     echo -e "${YELLOW}2.${RESET} Tạo Webhook từ Bot"
     echo -e "${YELLOW}3.${RESET} Spam Webhook"
     echo -e "${YELLOW}4.${RESET} Thoát"
@@ -204,7 +204,7 @@ main_menu() {
 }
 
 # Hiển thị trạng thái trước khi vào menu chính
-echo -e "${GREEN}Key available! Đang kết nối với API spam...${RESET}"
+echo -e "${GREEN}Key available Now Version Is 2.4${RESET}"
 sleep 1
 echo -e "${CYAN}V.24 Đã sẵn sàng!${RESET}"
 main_menu
